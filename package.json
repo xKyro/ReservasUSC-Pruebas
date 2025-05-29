@@ -1,5 +1,6 @@
 {
   "devDependencies": {
-    "cypress": "^14.3.3"
+    "cypress": "^14.3.3",
+    "mailosaur": "^8.8.1"
   }
 }

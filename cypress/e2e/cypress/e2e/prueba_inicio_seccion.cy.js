@@ -1,41 +1,28 @@
 describe('Autenticación en el sistema', () => {
     it('Debe iniciar sesión con credenciales válidas', () => {
-        cy.request('POST', 'http://localhost:8080/api/v1/auth/login', {  // ⚠️ Ajusta la URL según tu backend
-            email: 'andres.caicedo08@usc.edu.co',
-            password: '1234'
-        }).then((response) => {
-            expect(response.status).to.eq(200);  // ✅ Verifica que la respuesta del servidor sea exitosa
-            const token = response.body.token;
-            cy.wrap(token).as("token")
+        cy.wrap("having-metal@a1clh5y8.mailosaur.net").as("mail")
+        cy.wrap("1234").as("password")
+        cy.wrap("a1clh5y8").as("serverid")
 
-            cy.request({
-                method: "GET",
-                url: "http://localhost:8080/api/v1/@me",
-                headers: {
-                    Authorization: token
-                }
-            }).then(self => {
-                const { id, first_name, last_name, credentials, role } = self.body.user;
-                const user = {
-                    id,
-                    name: `${first_name} ${last_name}`,
-                    role,
-                    email: credentials.email
-                }
+        cy.visit("http://localhost:5173/login").then(() => {
+            cy.get("@mail").then(email => {
+                cy.get("@password").then(password => {
+                    cy.wait(2000)
+                    cy.get("#email").should("exist").type(email)
+                    cy.get("#password").should("exist").type(password)
 
-                cy.wrap(user).as("user")
-            })
-        });
+                    cy.get("button[type=submit]").should("exist").click()
 
-        // Visitar el dashboard después del login - Espera
-        cy.get("@token").then((token) => {
-            cy.get("@user").then(user => {
-                cy.visit('http://localhost:5173/dashboard', {
-                    onBeforeLoad(win) {
-                        win.localStorage.setItem('token', token);
-                        win.localStorage.setItem('user', JSON.stringify(user));
-                    }
-                });
+                    cy.wait(10000)
+                    cy.get("@serverid").then(serverId => {
+                        cy.task("getLastMail", serverId, email).then(code => {
+                            cy.wait(2000)
+                            cy.get("#verificationCode").should("exist").type(code)
+
+                            cy.get("button[type=submit]").should("exist").click()
+                        })
+                    })
+                })
             })
         })
     });
